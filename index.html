@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f3b35f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Семейное меню">
+<title>Семейное меню</title>
+<style>
+:root{--bg:#fffaf2;--card:#fff;--ink:#18382d;--green:#618a70;--muted:#7d837e;--peach:#fff0db;--blue:#eaf5fb;--pink:#fae7e8;--line:#eadfce;--shadow:0 10px 30px rgba(52,39,23,.08)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;color:#27362f}body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#app{max-width:760px;margin:auto;min-height:100vh}.top{display:flex;justify-content:space-between;align-items:center;padding:18px 16px 10px}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--green)}h1{margin:4px 0 0;font-size:28px;color:var(--ink)}.muted{color:var(--muted);font-size:13px}
+.refresh{border:0;width:44px;height:44px;border-radius:50%;background:#fff;box-shadow:var(--shadow);font-size:24px;color:var(--green)}
+.tabs{display:flex;gap:8px;padding:8px 14px 12px;position:sticky;top:0;z-index:10;background:rgba(255,250,242,.96);backdrop-filter:blur(12px)}
+button{font:inherit}.tab,.day,.meal,.buy{border:0;border-radius:16px;padding:10px 14px;background:#f0ece6;color:#625d56;white-space:nowrap}.tab.active,.day.active,.meal.active,.buy.active{background:var(--green);color:white;font-weight:700}
+main{padding:0 14px 30px}.days{display:flex;gap:8px;overflow:auto;padding:3px 0 12px}.meals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.meal{background:#fff;border:1px solid var(--line)}
+.card{background:#fff;border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:var(--shadow)}.hero{min-height:185px;padding:24px;display:flex;align-items:flex-end;background:linear-gradient(135deg,#ffe6ad,#e7f4e5 48%,#dceffa);position:relative}.hero .emoji{position:absolute;right:24px;top:18px;font-size:68px}.hero h2{margin:0;max-width:78%;font-size:28px;line-height:1.05;color:var(--ink)}
+.body{padding:16px}.badges{display:flex;gap:8px;flex-wrap:wrap}.badge{background:var(--peach);padding:6px 10px;border-radius:999px;font-size:13px}.block{border-radius:18px;padding:14px;margin:12px 0}.ingredients{background:var(--blue)}.steps{background:#fff6e7}.tip{background:#eef6ed;border-left:5px solid #7ea383}.extra{background:var(--pink)}.block h3{margin:0 0 10px;color:var(--ink)}
+.ing{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed rgba(50,70,60,.14)}.ing:last-child{border:0}.ing input,.shop input{width:22px;height:22px;accent-color:var(--green)}.ing.done span,.shop.done span{text-decoration:line-through;color:#a0a5a1}.qty{color:#747b77}.steps ol{margin:0;padding-left:22px}.steps li{padding:5px 0;line-height:1.42}
+.hidden{display:none!important}.sectionHead{display:flex;justify-content:space-between;align-items:flex-start}.small{border:0;border-radius:14px;padding:10px 12px;background:#eee9e1}.buyTabs{display:flex;gap:8px;overflow:auto;margin:12px 0}.buy{background:#fff;border:1px solid var(--line)}.shopBox{background:#fff;border:1px solid var(--line);border-radius:20px;padding:8px 14px;box-shadow:var(--shadow)}.shop{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f0ece6}.shop:last-child{border:0}
+.empty,.about{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:var(--shadow)}.note{background:#fff6e7;border-radius:16px;padding:12px;margin-top:10px;line-height:1.45}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="top"><div><div class="eyebrow">СЕМЕЙНОЕ МЕНЮ</div><h1 id="title">Меню на неделю</h1><div class="muted" id="updated"></div></div><button class="refresh" id="refresh" aria-label="Обновить">↻</button></header>
+<nav class="tabs"><button class="tab active" data-view="week">Неделя</button><button class="tab" data-view="shopping">Покупки</button><button class="tab" data-view="about">О приложении</button></nav>
+<main>
+<section id="weekView"><div class="days" id="days"></div><div class="meals"><button class="meal active" data-meal="breakfast">Завтрак</button><button class="meal" data-meal="lunch">Обед</button><button class="meal" data-meal="dinner">Ужин</button></div><div id="recipe"></div></section>
+<section id="shoppingView" class="hidden"><div class="sectionHead"><div><h2>Список покупок</h2><div class="muted">Галочки сохраняются на iPhone.</div></div><button class="small" id="reset">Сбросить</button></div><div class="buyTabs"><button class="buy active" data-buy="sun">Воскресенье · 55–60%</button><button class="buy" data-buy="wed">Среда · 40–45%</button></div><div id="shopping"></div></section>
+<section id="aboutView" class="hidden"><div class="about"><h2>Связь с этим чатом</h2><p>Приложение получает рецепты из <b>menu.json</b>. Когда меню утверждено и вы пишете <b>«добавь в приложение»</b>, я обновляю этот файл в GitHub.</p><div class="note">После обновления нажмите ↻ сверху. Переустанавливать приложение не нужно.</div></div></section>
+</main></div>
+<script>
+const S={menu:null,day:'mon',meal:'breakfast',view:'week',buy:'sun',checked:JSON.parse(localStorage.getItem('fm_checked')||'{}')};
+const order=['mon','tue','wed','thu','fri','sat','sun'];
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const key=s=>String(s).toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/gi,' ').trim();
+const done=n=>!!S.checked[key(n)];
+function setDone(n,v){S.checked[key(n)]=v;localStorage.setItem('fm_checked',JSON.stringify(S.checked))}
+async function load(){
+ try{const r=await fetch('menu.json?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;S.menu=await r.json();localStorage.setItem('fm_menu',JSON.stringify(S.menu))}
+ catch(e){const c=localStorage.getItem('fm_menu');if(c)S.menu=JSON.parse(c)}
+ render();
+}
+function render(){if(!S.menu)return;document.getElementById('title').textContent=S.menu.title||'Семейное меню';document.getElementById('updated').textContent='Обновлено: '+(S.menu.updatedAt||'—');renderDays();renderRecipe();renderShopping()}
+function renderDays(){const w=document.getElementById('days');w.innerHTML='';order.forEach(d=>{const b=document.createElement('button');b.className='day'+(S.day===d?' active':'');b.textContent=S.menu.days[d].name.slice(0,3);b.onclick=()=>{S.day=d;renderDays();renderRecipe()};w.appendChild(b)})}
+function renderRecipe(){
+ const r=S.menu.days[S.day][S.meal], box=document.getElementById('recipe');
+ if(!r||!r.title||r.placeholder){box.innerHTML='<div class="empty"><h2>Обед пока не выбран</h2><p>После выбора обедов в чате я добавлю их сюда.</p></div>';return}
+ const ii=(r.ingredients||[]).map(x=>'<label class="ing '+(done(x.name)?'done':'')+'"><input type="checkbox" data-p="'+esc(x.name)+'" '+(done(x.name)?'checked':'')+'><span><b>'+esc(x.name)+'</b>'+(x.qty?' <span class="qty">— '+esc(x.qty)+'</span>':'')+'</span></label>').join('');
+ const ss=(r.steps||[]).map(x=>'<li>'+esc(x)+'</li>').join('');
+ box.innerHTML='<article class="card"><div class="hero"><div class="emoji">'+esc(r.emoji||'🍽️')+'</div><h2>'+esc(r.title)+'</h2></div><div class="body"><div class="badges"><span class="badge">⏱ '+esc(r.time||'')+'</span><span class="badge">👨‍👩‍👦‍👦 4 порции</span></div><section class="block ingredients"><h3>🛒 Продукты</h3>'+ii+'</section><section class="block steps"><h3>👩‍🍳 Как приготовить</h3><ol>'+ss+'</ol></section>'+(r.tip?'<section class="block tip"><h3>💡 Фишка</h3>'+esc(r.tip)+'</section>':'')+(r.extra?'<section class="block extra"><h3>🍰 Дополнительно</h3>'+esc(r.extra)+'</section>':'')+'</div></article>';
+ box.querySelectorAll('[data-p]').forEach(c=>c.onchange=()=>{setDone(c.dataset.p,c.checked);renderRecipe();renderShopping()})
+}
+function allIng(){let a=[];order.forEach(d=>['breakfast','lunch','dinner'].forEach(m=>(S.menu.days[d][m].ingredients||[]).forEach(x=>a.push(x))));return a}
+function renderShopping(){
+ if(!S.menu)return;const g={};allIng().filter(x=>(x.buyDay||'sun')===S.buy).forEach(x=>{const k=key(x.name);if(!g[k])g[k]={name:x.name,qty:[]};if(x.qty)g[k].qty.push(x.qty)});
+ const rows=Object.values(g).sort((a,b)=>a.name.localeCompare(b.name,'ru')).map(x=>'<label class="shop '+(done(x.name)?'done':'')+'"><input type="checkbox" data-p="'+esc(x.name)+'" '+(done(x.name)?'checked':'')+'><span><b>'+esc(x.name)+'</b>'+(x.qty.length?' — '+esc([...new Set(x.qty)].join(' + ')):'')+'</span></label>').join('');
+ document.getElementById('shopping').innerHTML='<div class="shopBox">'+rows+'</div>';
+ document.querySelectorAll('#shopping [data-p]').forEach(c=>c.onchange=()=>{setDone(c.dataset.p,c.checked);renderShopping();renderRecipe()})
+}
+function view(v){S.view=v;['week','shopping','about'].forEach(x=>document.getElementById(x+'View').classList.toggle('hidden',x!==v));document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===v))}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>view(b.dataset.view));
+document.querySelectorAll('.meal').forEach(b=>b.onclick=()=>{S.meal=b.dataset.meal;document.querySelectorAll('.meal').forEach(x=>x.classList.toggle('active',x===b));renderRecipe()});
+document.querySelectorAll('.buy').forEach(b=>b.onclick=()=>{S.buy=b.dataset.buy;document.querySelectorAll('.buy').forEach(x=>x.classList.toggle('active',x===b));renderShopping()});
+document.getElementById('refresh').onclick=load;
+document.getElementById('reset').onclick=()=>{if(confirm('Сбросить все отметки покупок?')){S.checked={};localStorage.removeItem('fm_checked');render()}};
+load();
+</script>
+</body>
+</html>
