@@ -33,7 +33,7 @@ main{padding:0 14px 30px}.days{display:flex;gap:8px;overflow:auto;padding:3px 0 
 <nav class="tabs"><button class="tab active" data-view="week">Неделя</button><button class="tab" data-view="shopping">Покупки</button><button class="tab" data-view="about">О приложении</button></nav>
 <main>
 <section id="weekView"><div class="days" id="days"></div><div class="meals"><button class="meal active" data-meal="breakfast">Завтрак</button><button class="meal" data-meal="lunch">Обед</button><button class="meal" data-meal="dinner">Ужин</button></div><div id="recipe"></div></section>
-<section id="shoppingView" class="hidden"><div class="sectionHead"><div><h2>Список покупок</h2><div class="muted">Галочки сохраняются на iPhone.</div></div><button class="small" id="reset">Сбросить</button></div><div class="buyTabs"><button class="buy active" data-buy="sun">Воскресенье · 55–60%</button><button class="buy" data-buy="wed">Среда · 40–45%</button></div><div id="shopping"></div></section>
+<section id="shoppingView" class="hidden"><div class="sectionHead"><div><h2>Список покупок</h2><div class="muted">Галочки сохраняются на iPhone.</div></div><button class="small" id="reset">Сбросить</button></div><div class="buyTabs"><button class="buy active" data-buy="sun">Воскресенье · 4 октября</button><button class="buy" data-buy="wed">Среда · 7 октября</button></div><div id="shopping"></div></section>
 <section id="aboutView" class="hidden"><div class="about"><h2>Связь с этим чатом</h2><p>Приложение получает рецепты из <b>menu.json</b>. Когда меню утверждено и вы пишете <b>«добавь в приложение»</b>, я обновляю этот файл в GitHub.</p><div class="note">После обновления нажмите ↻ сверху. Переустанавливать приложение не нужно.</div></div></section>
 </main></div>
 <script>
@@ -59,9 +59,22 @@ function renderRecipe(){
  box.querySelectorAll('[data-p]').forEach(c=>c.onchange=()=>{setDone(c.dataset.p,c.checked);renderRecipe();renderShopping()})
 }
 function allIng(){let a=[];order.forEach(d=>['breakfast','lunch','dinner'].forEach(m=>(S.menu.days[d][m].ingredients||[]).forEach(x=>a.push(x))));return a}
+function sumQty(values){
+ const totals=new Map(), other=[];
+ values.forEach(value=>{
+  const match=String(value).trim().match(/^(\d+(?:[.,]\d+)?)\s*(г|кг|мл|л|шт\.|ломтик(?:а|ов)?)$/);
+  if(!match){if(!other.includes(value))other.push(value);return}
+  let amount=Number(match[1].replace(',','.')), unit=match[2];
+  if(unit==='кг'){amount*=1000;unit='г'}
+  if(unit==='л'){amount*=1000;unit='мл'}
+  if(unit.startsWith('ломтик'))unit='ломтиков';
+  totals.set(unit,(totals.get(unit)||0)+amount);
+ });
+ return [...totals.entries()].map(([unit,total])=>Number(total.toFixed(3))+' '+unit).concat(other).join(' + ');
+}
 function renderShopping(){
  if(!S.menu)return;const g={};allIng().filter(x=>(x.buyDay||'sun')===S.buy).forEach(x=>{const k=key(x.name);if(!g[k])g[k]={name:x.name,qty:[]};if(x.qty)g[k].qty.push(x.qty)});
- const rows=Object.values(g).sort((a,b)=>a.name.localeCompare(b.name,'ru')).map(x=>'<label class="shop '+(done(x.name)?'done':'')+'"><input type="checkbox" data-p="'+esc(x.name)+'" '+(done(x.name)?'checked':'')+'><span><b>'+esc(x.name)+'</b>'+(x.qty.length?' — '+esc([...new Set(x.qty)].join(' + ')):'')+'</span></label>').join('');
+ const rows=Object.values(g).sort((a,b)=>a.name.localeCompare(b.name,'ru')).map(x=>'<label class="shop '+(done(x.name)?'done':'')+'"><input type="checkbox" data-p="'+esc(x.name)+'" '+(done(x.name)?'checked':'')+'><span><b>'+esc(x.name)+'</b>'+(x.qty.length?' — '+esc(sumQty(x.qty)):'')+'</span></label>').join('');
  document.getElementById('shopping').innerHTML='<div class="shopBox">'+rows+'</div>';
  document.querySelectorAll('#shopping [data-p]').forEach(c=>c.onchange=()=>{setDone(c.dataset.p,c.checked);renderShopping();renderRecipe()})
 }
