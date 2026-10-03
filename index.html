@@ -44,8 +44,20 @@ const key=s=>String(s).toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]
 const done=n=>!!S.checked[key(n)];
 function setDone(n,v){S.checked[key(n)]=v;localStorage.setItem('fm_checked',JSON.stringify(S.checked))}
 async function load(){
- try{const r=await fetch('menu.json?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;S.menu=await r.json();localStorage.setItem('fm_menu',JSON.stringify(S.menu))}
- catch(e){const c=localStorage.getItem('fm_menu');if(c)S.menu=JSON.parse(c)}
+ try{
+  const r=await fetch('menu.json?ts='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  S.menu=await r.json();
+  localStorage.setItem('fm_menu',JSON.stringify(S.menu));
+ }catch(e){
+  const c=localStorage.getItem('fm_menu');
+  if(c){try{S.menu=JSON.parse(c)}catch(_){}}
+  if(!S.menu){
+   document.getElementById('recipe').innerHTML='<div class="empty"><h2>Не удалось загрузить меню</h2><p>Нажмите ↻. Если ошибка повторится, откройте приложение заново.</p></div>';
+   document.getElementById('updated').textContent='Ошибка загрузки меню';
+   return;
+  }
+ }
  render();
 }
 function render(){if(!S.menu)return;document.getElementById('title').textContent=S.menu.title||'Семейное меню';document.getElementById('updated').textContent='Обновлено: '+(S.menu.updatedAt||'—');renderDays();renderRecipe();renderShopping()}
